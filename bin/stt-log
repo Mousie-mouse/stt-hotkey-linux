@@ -3,9 +3,11 @@
 LOG="/tmp/whisper_stt/last_run.log"
 
 if [ ! -f "$LOG" ]; then
-    notify-send "STT" "No log file found"
-    exit 0
+    echo "No log found"
+    exit 1
 fi
+
+cat "$LOG"
 
 # Open in terminal for visibility
 x-terminal-emulator -e bash -c "echo '--- STT LOG ---'; cat $LOG; echo; read -p 'Press enter to close...'"

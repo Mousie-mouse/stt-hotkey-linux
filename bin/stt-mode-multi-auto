@@ -1,10 +1,15 @@
 #!/bin/bash
 
 TMP_DIR="/tmp/whisper_stt"
-mkdir -p "$TMP_DIR"
 
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT" "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+printf '%s' "auto" > "$TMP_DIR/current_language"
 printf '%s' "$HOME/whisper.cpp/models/ggml-small.bin" > "$TMP_DIR/current_model"
-printf '%s' "da" > "$TMP_DIR/current_language"
 : > "$TMP_DIR/current_extra"
 
-notify-send "STT Mode" "Multilingual auto: small"
+notify "Mode: multilingual (auto detect)"

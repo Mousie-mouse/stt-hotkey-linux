@@ -1,7 +1,14 @@
 #!/bin/bash
 
 TMP_DIR="/tmp/whisper_stt"
-MODEL="$(cat "$TMP_DIR/current_model" 2>/dev/null || echo "$HOME/whisper.cpp/models/ggml-base.en.bin")"
-LANG="$(cat "$TMP_DIR/current_language" 2>/dev/null || echo "en")"
 
-notify-send "STT Mode" "Model: $(basename "$MODEL") | Lang: $LANG"
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT" "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+LANG=$(cat "$TMP_DIR/current_language" 2>/dev/null || echo "unset")
+MODEL=$(cat "$TMP_DIR/current_model" 2>/dev/null || echo "unset")
+
+notify "Lang: $LANG | Model: $(basename "$MODEL")"

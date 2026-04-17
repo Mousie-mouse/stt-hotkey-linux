@@ -21,7 +21,9 @@ BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
 mkdir -p "$TMP_DIR"
 
 notify() {
-    notify-send "STT" "$1"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT" "$1" >/dev/null 2>&1 || true
+    fi
 }
 
 cleanup_lock() {

@@ -1,10 +1,15 @@
 #!/bin/bash
 
 TMP_DIR="/tmp/whisper_stt"
-mkdir -p "$TMP_DIR"
 
-printf '%s' "$HOME/whisper.cpp/models/ggml-base.en.bin" > "$TMP_DIR/current_model"
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT" "$1" >/dev/null 2>&1 || true
+    fi
+}
+
 printf '%s' "en" > "$TMP_DIR/current_language"
+printf '%s' "$HOME/whisper.cpp/models/ggml-base.en.bin" > "$TMP_DIR/current_model"
 : > "$TMP_DIR/current_extra"
 
-notify-send "STT Mode" "Fast English: base.en"
+notify "Mode: fast English (base.en)"
