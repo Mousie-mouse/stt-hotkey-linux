@@ -1,0 +1,147 @@
+#!/bin/bash
+set -u
+
+TMP_DIR="/tmp/whisper_stt"
+PID_FILE="$TMP_DIR/arecord.pid"
+WAV_FILE="$TMP_DIR/record.wav"
+LOG_FILE="$TMP_DIR/last_run.log"
+LAST_TXT="$TMP_DIR/last_transcript.txt"
+LOCK_DIR="$TMP_DIR/lock"
+
+MODEL_FILE="$TMP_DIR/current_model"
+LANG_FILE="$TMP_DIR/current_language"
+EXTRA_FILE="$TMP_DIR/current_extra"
+
+DEFAULT_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
+DEFAULT_LANG="auto"
+DEFAULT_EXTRA=""
+
+BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
+
+mkdir -p "$TMP_DIR"
+
+notify() {
+    notify-send "STT" "$1"
+}
+
+cleanup_lock() {
+    rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    exit 0
+fi
+trap cleanup_lock EXIT
+
+if [ ! -x "$BIN" ]; then
+    notify "whisper-cli not found"
+    exit 1
+fi
+
+MODEL="$DEFAULT_MODEL"
+LANG="$DEFAULT_LANG"
+EXTRA="$DEFAULT_EXTRA"
+
+if [ -s "$MODEL_FILE" ]; then
+    MODEL="$(cat "$MODEL_FILE")"
+fi
+
+if [ -s "$LANG_FILE" ]; then
+    LANG="$(cat "$LANG_FILE")"
+fi
+
+if [ -s "$EXTRA_FILE" ]; then
+    EXTRA="$(cat "$EXTRA_FILE")"
+fi
+
+if [ ! -f "$MODEL" ]; then
+    notify "Model file missing"
+    exit 1
+fi
+
+if ! command -v arecord >/dev/null 2>&1; then
+    notify "arecord not installed"
+    exit 1
+fi
+
+if ! command -v xclip >/dev/null 2>&1; then
+    notify "xclip not installed"
+    exit 1
+fi
+
+# Clear stale PID if recorder is gone
+if [ -f "$PID_FILE" ]; then
+    OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
+    if [ -z "${OLD_PID:-}" ] || ! kill -0 "$OLD_PID" 2>/dev/null; then
+        rm -f "$PID_FILE"
+    fi
+fi
+
+# Stop + transcribe
+if [ -f "$PID_FILE" ]; then
+    REC_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
+
+    if [ -n "${REC_PID:-}" ] && kill -0 "$REC_PID" 2>/dev/null; then
+        notify "Stopping recording..."
+        kill -INT "$REC_PID" 2>/dev/null
+
+        for _ in $(seq 1 50); do
+            if kill -0 "$REC_PID" 2>/dev/null; then
+                sleep 0.1
+            else
+                break
+            fi
+        done
+    fi
+
+    rm -f "$PID_FILE"
+
+    if [ ! -s "$WAV_FILE" ]; then
+        notify "No audio captured"
+        exit 1
+    fi
+
+    FILE_SIZE="$(stat -c%s "$WAV_FILE" 2>/dev/null || echo 0)"
+    if [ "$FILE_SIZE" -lt 4096 ]; then
+        notify "Recording too short"
+        exit 1
+    fi
+
+    notify "Transcribing..."
+
+    TEXT="$(
+        "$BIN" -m "$MODEL" -f "$WAV_FILE" -l "$LANG" $EXTRA 2>"$LOG_FILE" \
+        | sed -E '/^\s*$/d' \
+        | sed -E '/^whisper_/d' \
+        | sed -E 's/\[[^]]*\][[:space:]]*//g'
+    )"
+
+    TEXT="$(printf '%s' "$TEXT" | sed -E ':a;N;$!ba;s/^[[:space:]\n]+//;s/[[:space:]\n]+$//')"
+
+    if [ -z "$TEXT" ]; then
+        notify "No speech recognized"
+        exit 1
+    fi
+
+    printf '%s' "$TEXT" > "$LAST_TXT"
+    printf '%s' "$TEXT" | xclip -selection clipboard
+    notify "Copied to clipboard"
+    exit 0
+fi
+
+# Start recording
+rm -f "$WAV_FILE" "$LOG_FILE"
+
+notify "Recording started"
+arecord -q -f S16_LE -c 1 -r 16000 "$WAV_FILE" >"$LOG_FILE" 2>&1 &
+REC_PID=$!
+echo "$REC_PID" > "$PID_FILE"
+
+sleep 0.2
+if ! kill -0 "$REC_PID" 2>/dev/null; then
+    rm -f "$PID_FILE"
+    notify "Mic start failed"
+    exit 1
+fi
+
+exit 0

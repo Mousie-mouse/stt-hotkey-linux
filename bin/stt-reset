@@ -1,0 +1,15 @@
+#!/bin/bash
+
+TMP_DIR="/tmp/whisper_stt"
+
+notify-send "STT" "Resetting..."
+
+# Stop any active recording
+pkill -INT arecord 2>/dev/null
+
+# Clean state
+rm -f "$TMP_DIR/arecord.pid"
+rm -f "$TMP_DIR/record.wav"
+rm -f "$TMP_DIR/last_run.log"
+
+notify-send "STT" "Reset complete"

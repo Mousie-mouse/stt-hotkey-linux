@@ -1,0 +1,11 @@
+#!/bin/bash
+
+FILE="/tmp/whisper_stt/last_transcript.txt"
+
+if [ ! -s "$FILE" ]; then
+    notify-send "STT" "No saved transcript"
+    exit 1
+fi
+
+cat "$FILE" | xclip -selection clipboard
+notify-send "STT" "Last transcript copied"

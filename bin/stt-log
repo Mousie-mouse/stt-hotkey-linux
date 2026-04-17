@@ -1,0 +1,11 @@
+#!/bin/bash
+
+LOG="/tmp/whisper_stt/last_run.log"
+
+if [ ! -f "$LOG" ]; then
+    notify-send "STT" "No log file found"
+    exit 0
+fi
+
+# Open in terminal for visibility
+x-terminal-emulator -e bash -c "echo '--- STT LOG ---'; cat $LOG; echo; read -p 'Press enter to close...'"

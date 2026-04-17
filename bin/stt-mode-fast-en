@@ -1,0 +1,10 @@
+#!/bin/bash
+
+TMP_DIR="/tmp/whisper_stt"
+mkdir -p "$TMP_DIR"
+
+printf '%s' "$HOME/whisper.cpp/models/ggml-base.en.bin" > "$TMP_DIR/current_model"
+printf '%s' "en" > "$TMP_DIR/current_language"
+: > "$TMP_DIR/current_extra"
+
+notify-send "STT Mode" "Fast English: base.en"
