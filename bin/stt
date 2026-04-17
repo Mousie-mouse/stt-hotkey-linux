@@ -13,7 +13,7 @@ LANG_FILE="$TMP_DIR/current_language"
 EXTRA_FILE="$TMP_DIR/current_extra"
 
 DEFAULT_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
-DEFAULT_LANG="auto"
+DEFAULT_LANG="en"
 DEFAULT_EXTRA=""
 
 BIN="$HOME/whisper.cpp/build/bin/whisper-cli"

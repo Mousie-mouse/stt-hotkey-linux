@@ -1,8 +1,15 @@
 #!/bin/bash
 
 TMP_DIR="/tmp/whisper_stt"
+mkdir -p "$TMP_DIR"
 
-notify-send "STT" "Resetting..."
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT" "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+notify "Resetting..."
 
 # Stop any active recording
 pkill -INT arecord 2>/dev/null
@@ -12,4 +19,9 @@ rm -f "$TMP_DIR/arecord.pid"
 rm -f "$TMP_DIR/record.wav"
 rm -f "$TMP_DIR/last_run.log"
 
-notify-send "STT" "Reset complete"
+# Reset to English defaults
+printf '%s' "en" > "$TMP_DIR/current_language"
+printf '%s' "$HOME/whisper.cpp/models/ggml-base.en.bin" > "$TMP_DIR/current_model"
+: > "$TMP_DIR/current_extra"
+
+notify "Reset complete → English"
