@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TMP_DIR="/tmp/whisper_stt"
+mkdir -p "$TMP_DIR"
 
 notify() {
     if command -v notify-send >/dev/null 2>&1; then
