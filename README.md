@@ -69,4 +69,10 @@ cd ~/stt-hotkey-linux
 ## Notes
 
 This repo does not package `whisper.cpp` itself. It expects a local build in `~/whisper.cpp` and uses the current `whisper-cli` binary from that build.
->>>>>>> 7bfad24 (Initial commit: STT hotkey toolkit)
+
+## Security / Privacy Notes
+
+- Runs fully locally (no external API calls)
+- Audio never leaves the machine
+- No persistent storage of recordings
+- Minimal dependencies
