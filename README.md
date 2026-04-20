@@ -16,7 +16,7 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 
 ## Requirements
 
-- Linux with X11 clipboard support
+- `Linux with X11 clipboard support`
 - `whisper.cpp`
 - `arecord`
 - `xclip`
@@ -41,12 +41,11 @@ cmake --build build -j --config Release
 
 ## Download models
 
-```bash
-cd ~/whisper.cpp
-bash ./models/download-ggml-model.sh base.en
-bash ./models/download-ggml-model.sh small.en
-bash ./models/download-ggml-model.sh small
-```
+```bash cd ~/whisper.cpp ```
+```bash ./models/download-ggml-model.sh base.en ```
+```bash ./models/download-ggml-model.sh small.en ```
+```bash ./models/download-ggml-model.sh small ```
+
 
 ## Install this toolkit
 
@@ -65,6 +64,54 @@ cd ~/stt-hotkey-linux
 - `Super+Alt+2` → `stt-mode-better-en`
 - `Super+Alt+3` → `stt-mode-multi-auto`
 - `Super+Alt+0` → `stt-mode-status`
+
+## Model Comparison Tool (`stt-compare`)
+
+This project includes a utility for comparing Whisper models on the same audio input.
+
+It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard.
+
+---
+
+### Usage
+
+Run on the default test file:
+
+```bash
+stt-compare
+```
+
+Run on a specific audio file: 
+
+```bash stt-compare ~/stt-audio-tests/audio/base-test.wav ```
+
+What it does
+
+- Runs ` base.en ` (fast & light)
+- Runs ` small.en` (more accurate)
+- Saves Transcripts to: ```text ~/stt-audio-tests/transcripts/ ```
+- Displays both outputs w side-to-side comparison
+- Copies `small.en` result to the clipboard
+
+### Example Workflow
+
+- Record audio
+```bash 
+stt
+sleep 5
+stt
+```
+- Save the recording
+```bash
+mkdir -p ~/stt-audio-tests/audio
+cp /tmp/whisper_stt/record.wav ~/stt-audio-tests/audio/test.wav
+```
+- Compare models
+```bash stt-compare ~/stt-audio-tests/audio/test.wav
+```
+
+### Why Compare?
+Different whisper models trade speed for accuracy. This tool lets you directly compare outputs on identical audio, and creates options for future development of tools that will improve this type of workflow
 
 ## Notes
 
