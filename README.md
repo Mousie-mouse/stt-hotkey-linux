@@ -72,6 +72,8 @@ cd ~/stt-hotkey-linux
 - `Super+Alt+2` → `stt-mode-better-en`
 - `Super+Alt+3` → `stt-mode-multi-auto`
 - `Super+Alt+0` → `stt-mode-status`
+- `Super+Alt+c`→ `stt-compare`
+
 
 ## Model Comparison Tool (`stt-compare`)
 
