@@ -55,13 +55,16 @@ cmake --build build -j --config Release
  ```
 
 
-## Install this toolkit
+## Install
+
+Clone the repo and run the installer:
 
 ```bash
+cd ~
+git clone https://github.com/Mousie-mouse/stt-hotkey-linux.git
 cd ~/stt-hotkey-linux
 ./install/install.sh
 ```
-
 ## Suggested shortcuts
 
 - `Super+Z` → `stt`
