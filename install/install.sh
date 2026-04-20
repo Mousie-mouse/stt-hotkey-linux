@@ -3,12 +3,11 @@ set -euo pipefail
 
 PREFIX="${HOME}/.local"
 BINDIR="${PREFIX}/bin"
-APPDIR="${HOME}/.config/stt-hotkey-linux"
-
-echo "Installing STT Hotkey scripts..."
+WHISPER_DIR="${HOME}/whisper.cpp"
+WHISPER_BIN="${WHISPER_DIR}/build/bin/whisper-cli"
+BASE_MODEL="${WHISPER_DIR}/models/ggml-base.en.bin"
 
 mkdir -p "$BINDIR"
-mkdir -p "$APPDIR"
 
 install -m 755 "$(dirname "$0")/../bin/stt" "$BINDIR/stt"
 install -m 755 "$(dirname "$0")/../bin/stt-reset" "$BINDIR/stt-reset"
@@ -20,25 +19,31 @@ install -m 755 "$(dirname "$0")/../bin/stt-mode-multi-auto" "$BINDIR/stt-mode-mu
 install -m 755 "$(dirname "$0")/../bin/stt-mode-status" "$BINDIR/stt-mode-status"
 install -m 755 "$(dirname "$0")/../bin/stt-compare" "$BINDIR/stt-compare"
 
+if ! command -v git >/dev/null 2>&1; then
+  echo "Missing dependency: git"
+  exit 1
+fi
 
-cat <<EOF
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "Missing dependency: cmake"
+  exit 1
+fi
 
-Installed to:
-  $BINDIR
+if [ ! -d "$WHISPER_DIR" ]; then
+  git clone https://github.com/ggml-org/whisper.cpp "$WHISPER_DIR"
+fi
 
-Next:
-  1. Make sure these dependencies exist:
-     git cmake build-essential ffmpeg sox xclip alsa-utils libnotify-bin
-  2. Build whisper.cpp in ~/whisper.cpp
-  3. Download the models you want
-  4. Point Cinnamon shortcuts to:
-       stt
-       stt-reset
-       stt-log
-       stt-last
-       stt-mode-fast-en
-       stt-mode-better-en
-       stt-mode-multi-auto
-       stt-mode-status
+if [ ! -x "$WHISPER_BIN" ]; then
+  cd "$WHISPER_DIR"
+  cmake -B build
+  cmake --build build -j --config Release
+fi
 
-EOF
+if [ ! -f "$BASE_MODEL" ]; then
+  cd "$WHISPER_DIR"
+  bash ./models/download-ggml-model.sh base.en
+fi
+
+echo "Install complete."
+echo "whisper-cli: $WHISPER_BIN"
+echo "model: $BASE_MODEL"
