@@ -16,11 +16,11 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 
 ## Requirements
 
-- `Linux with X11 clipboard support`
-- `whisper.cpp`
-- `arecord`
-- `xclip`
-- `notify-send`
+- Linux with X11 clipboard support
+- whisper.cpp
+- arecord
+- xclip
+- notify-send
 
 ## Packages
 
@@ -41,10 +41,18 @@ cmake --build build -j --config Release
 
 ## Download models
 
-```bash cd ~/whisper.cpp ```
-```bash ./models/download-ggml-model.sh base.en ```
-```bash ./models/download-ggml-model.sh small.en ```
-```bash ./models/download-ggml-model.sh small ```
+```bash
+ cd ~/whisper.cpp
+ ```
+```bash
+ ./models/download-ggml-model.sh base.en
+ ```
+```bash
+ ./models/download-ggml-model.sh small.en
+ ```
+```bash
+ ./models/download-ggml-model.sh small
+ ```
 
 
 ## Install this toolkit
@@ -83,13 +91,15 @@ stt-compare
 
 Run on a specific audio file: 
 
-```bash stt-compare ~/stt-audio-tests/audio/base-test.wav ```
+```bash 
+stt-compare ~/stt-audio-tests/audio/base-test.wav
+ ```
 
 What it does
 
 - Runs ` base.en ` (fast & light)
 - Runs ` small.en` (more accurate)
-- Saves Transcripts to: ```text ~/stt-audio-tests/transcripts/ ```
+- Saves Transcripts to: ` ~/stt-audio-tests/transcripts/ `
 - Displays both outputs w side-to-side comparison
 - Copies `small.en` result to the clipboard
 
@@ -107,11 +117,13 @@ mkdir -p ~/stt-audio-tests/audio
 cp /tmp/whisper_stt/record.wav ~/stt-audio-tests/audio/test.wav
 ```
 - Compare models
-```bash stt-compare ~/stt-audio-tests/audio/test.wav
+
+```bash
+ stt-compare ~/stt-audio-tests/audio/test.wav
 ```
 
 ### Why Compare?
-Different whisper models trade speed for accuracy. This tool lets you directly compare outputs on identical audio, and creates options for future development of tools that will improve this type of workflow
+Different whisper models trade speed for accuracy. This tool lets you directly compare outputs on identical audio
 
 ## Notes
 
