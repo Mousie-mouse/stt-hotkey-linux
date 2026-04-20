@@ -1,0 +1,96 @@
+#!/bin/bash
+set -euo pipefail
+
+TEST_DIR="$HOME/stt-audio-tests"
+AUDIO_DIR="$TEST_DIR/audio"
+TRANSCRIPT_DIR="$TEST_DIR/transcripts"
+DEFAULT_AUDIO="$AUDIO_DIR/base-test.wav"
+
+BASE_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
+SMALL_MODEL="$HOME/whisper.cpp/models/ggml-small.en.bin"
+BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
+
+mkdir -p "$AUDIO_DIR" "$TRANSCRIPT_DIR"
+
+usage() {
+    echo "Usage:"
+    echo "  stt-compare [audio-file]"
+    echo
+    echo "Examples:"
+    echo "  stt-compare"
+    echo "  stt-compare ~/stt-audio-tests/audio/base-test.wav"
+    exit 1
+}
+
+if [ ! -x "$BIN" ]; then
+    echo "Error: whisper-cli not found at $BIN"
+    exit 1
+fi
+
+if [ ! -f "$BASE_MODEL" ]; then
+    echo "Error: base model not found at $BASE_MODEL"
+    exit 1
+fi
+
+if [ ! -f "$SMALL_MODEL" ]; then
+    echo "Error: small model not found at $SMALL_MODEL"
+    exit 1
+fi
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+    usage
+fi
+
+INPUT_AUDIO="${1:-$DEFAULT_AUDIO}"
+
+if [ ! -f "$INPUT_AUDIO" ]; then
+    echo "Error: audio file not found: $INPUT_AUDIO"
+    exit 1
+fi
+
+BASENAME="$(basename "$INPUT_AUDIO")"
+STEM="${BASENAME%.*}"
+
+BASE_OUT="$TRANSCRIPT_DIR/${STEM}.base.txt"
+SMALL_OUT="$TRANSCRIPT_DIR/${STEM}.small.txt"
+
+cleanup_whisper_output() {
+    sed -E 's/\[[^]]*\][[:space:]]*//g' \
+    | sed -E '/^\s*$/d' \
+    | sed -E '/^whisper_/d'
+}
+
+echo "Running base.en on: $INPUT_AUDIO"
+"$BIN" -m "$BASE_MODEL" -f "$INPUT_AUDIO" -l en \
+    | cleanup_whisper_output > "$BASE_OUT"
+
+echo "Running small.en on: $INPUT_AUDIO"
+"$BIN" -m "$SMALL_MODEL" -f "$INPUT_AUDIO" -l en \
+    | cleanup_whisper_output > "$SMALL_OUT"
+
+echo
+echo "Saved transcripts:"
+echo "  $BASE_OUT"
+echo "  $SMALL_OUT"
+echo
+
+echo "===== base.en ====="
+cat "$BASE_OUT"
+echo
+echo "===== small.en ====="
+cat "$SMALL_OUT"
+echo
+
+if command -v sdiff >/dev/null 2>&1; then
+    echo "===== side-by-side diff ====="
+    sdiff -s "$BASE_OUT" "$SMALL_OUT" || true
+else
+    echo "===== diff ====="
+    diff -u "$BASE_OUT" "$SMALL_OUT" || true
+fi
+
+if command -v xclip >/dev/null 2>&1; then
+    cat "$SMALL_OUT" | xclip -selection clipboard
+    echo
+    echo "small.en output copied to clipboard."
+fi
