@@ -82,8 +82,12 @@ cd ~/stt-hotkey-linux
 
 This project includes a utility for comparing Whisper models on the same audio input.
 
-It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard.
+It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard. You will need to add these directory folders
 
+```bash
+mkdir -p "$HOME/stt-audio-tests/audio"
+mkdir -p "$HOME/stt-audio-tests/transcripts"
+```
 ---
 
 ### Usage
