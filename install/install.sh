@@ -6,8 +6,14 @@ BINDIR="${PREFIX}/bin"
 WHISPER_DIR="${HOME}/whisper.cpp"
 WHISPER_BIN="${WHISPER_DIR}/build/bin/whisper-cli"
 BASE_MODEL="${WHISPER_DIR}/models/ggml-base.en.bin"
+TEST_DIR="$HOME/stt-audio-tests"
+
+mkdir -p "$HOME/stt-audio-tests/audio"
+mkdir -p "$HOME/stt-audio-tests/transcripts"
 
 mkdir -p "$BINDIR"
+
+echo "Created test directories at $TEST_DIR"
 
 install -m 755 "$(dirname "$0")/../bin/stt" "$BINDIR/stt"
 install -m 755 "$(dirname "$0")/../bin/stt-reset" "$BINDIR/stt-reset"
@@ -29,6 +35,17 @@ if ! command -v cmake >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v arecord >/dev/null 2>&1; then
+  echo "Missing dependency: arecord (install alsa-utils)"
+  exit 1
+fi
+
+
+if ! command -v xclip >/dev/null 2>&1; then
+  echo "Missing dependency: xclip"
+  exit 1
+fi
+
 if [ ! -d "$WHISPER_DIR" ]; then
   git clone https://github.com/ggml-org/whisper.cpp "$WHISPER_DIR"
 fi
@@ -44,6 +61,41 @@ if [ ! -f "$BASE_MODEL" ]; then
   bash ./models/download-ggml-model.sh base.en
 fi
 
-echo "Install complete."
-echo "whisper-cli: $WHISPER_BIN"
-echo "model: $BASE_MODEL"
+# --- verification block starts here ---
+
+echo
+echo "Verifying install..."
+
+if [ ! -x "$WHISPER_BIN" ]; then
+  echo "Verification failed: whisper-cli not found at $WHISPER_BIN"
+  exit 1
+fi
+
+if [ ! -f "$BASE_MODEL" ]; then
+  echo "Verification failed: base model not found at $BASE_MODEL"
+  exit 1
+fi
+
+echo "whisper-cli found: $WHISPER_BIN"
+echo "base model found: $BASE_MODEL"
+
+echo
+echo "Available capture devices:"
+arecord -l || true
+
+cat <<EOF
+
+Install complete.
+
+Next steps:
+  1. If your mic records silence, run:
+       arecord -l
+       arecord -L | sed -n '1,120p'
+       alsamixer
+  2. Then set your Cinnamon shortcut to:
+       $HOME/.local/bin/stt
+
+Optional smoke test:
+  $WHISPER_BIN -m $BASE_MODEL -f /path/to/test.wav -l en
+
+EOF
