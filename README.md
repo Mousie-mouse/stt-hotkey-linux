@@ -14,46 +14,17 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 - View logs
 - Re-copy the last transcript
 
-## Requirements
+=====## Requirements
 
-- Linux with X11 clipboard support
-- whisper.cpp
-- arecord
-- xclip
-- notify-send
+- Linux (tested and built with Mint/Cinnamon)
+- X11 clipboard support
 
-## Packages
+## packages
 
 ```bash
 sudo apt update
 sudo apt install git cmake build-essential ffmpeg sox xclip alsa-utils libnotify-bin
 ```
-
-## Build whisper.cpp
-
-```bash
-cd ~
-git clone https://github.com/ggml-org/whisper.cpp
-cd whisper.cpp
-cmake -B build
-cmake --build build -j --config Release
-```
-
-## Download models
-
-```bash
- cd ~/whisper.cpp
- ```
-```bash
- ./models/download-ggml-model.sh base.en
- ```
-```bash
- ./models/download-ggml-model.sh small.en
- ```
-```bash
- ./models/download-ggml-model.sh small
- ```
-
 
 ## Install
 
@@ -65,7 +36,58 @@ git clone https://github.com/Mousie-mouse/stt-hotkey-linux.git
 cd ~/stt-hotkey-linux
 ./install/install.sh
 ```
-## Suggested shortcuts
+### What the installer does
+
+The installer automatically:
+
+- Installs all stt-* scripts to ~/.local/bin
+- Clones and builds whisper.cpp (if missing)
+- Downloads the base.en model
+- Creates runtime directories:
+-- ~/stt-audio-tests/audio
+-- ~/stt-audio-tests/transcripts
+- Verifies installation
+
+No manual whisper setup required. (I include manual install in troubleshooter)
+
+## First Run
+
+Test the tool:
+
+```bash
+stt
+sleep 5
+stt
+```
+
+Your transcript will be copied to the clipboard.
+## Troubleshooting Audio (Important)
+
+If transcription returns empty:
+
+1. Check devices
+```bash
+arecord -l
+```
+2. List usable inputs
+```bash
+arecord -L | sed -n '1,120p'
+```
+3. Test microphone manually
+```bash
+arecord -D plughw:CARD=PCH,DEV=0 -f S16_LE -c 2 -r 16000 -d 5 /tmp/test.wav
+aplay /tmp/test.wav
+```
+4. Adjust input levels
+```bash
+alsamixer
+```
+Common issue:
+
+- Hardware often requires stereo (2 channels)
+- plughw: is required for resampling
+
+## Suggested shortcuts (`stt-mode-better-en`, `stt-mode-multi-auto`, and `stt-compare` require `small.en` and `small` models (or you could add larger models manually))
 
 - `Super+Z` → `stt`
 - `Super+Shift+Z` → `stt-reset`
@@ -77,18 +99,52 @@ cd ~/stt-hotkey-linux
 - `Super+Alt+0` → `stt-mode-status`
 - `Super+Alt+c`→ `stt-compare`
 
+## Models (Optional)
+
+By default, the installer downloads only:
+
+- `base.en` → fast, lightweight, English-only
+
+This keeps install size small and fast.
+
+---
+
+### Install additional models
+
+If you want higher accuracy or multilingual support:
+
+```bash
+cd ~/whisper.cpp
+```
+
+- Better English accuracy
+```bash ./models/download-ggml-model.sh small.en
+```
+- Multilingual model (auto language detection)
+```bash ./models/download-ggml-model.sh small
+```
+
+## When to use what
+- Use `base.en` → quick notes, commands, low CPU
+- Use `small.en` → better transcription quality
+- Use `small` → mixed languages / unknown language
+
+## Switching modes
+- `base.en` 
+```bash
+stt-mode-fast-en
+```
+- `small.en`
+ ```bash
+ stt-model-better-en
+```
+- `small` (*auto-detects multiple languages* (usually, if you have the VRAM, this is where I would recommend a larger whisper model))
 
 ## Model Comparison Tool (`stt-compare`)
 
 This project includes a utility for comparing Whisper models on the same audio input.
 
-It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard. You will need to add these directory folders
-
-```bash
-mkdir -p "$HOME/stt-audio-tests/audio"
-mkdir -p "$HOME/stt-audio-tests/transcripts"
-```
----
+It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard. 
 
 ### Usage
 
@@ -107,10 +163,10 @@ stt-compare ~/stt-audio-tests/audio/base-test.wav
 What it does
 
 - Runs ` base.en ` (fast & light)
-- Runs ` small.en` (more accurate)
+- Runs ` small.en` (more accurate if installed)
 - Saves Transcripts to: ` ~/stt-audio-tests/transcripts/ `
 - Displays both outputs w side-to-side comparison
-- Copies `small.en` result to the clipboard
+- Copies result to the clipboard
 
 ### Example Workflow
 
@@ -130,9 +186,6 @@ cp /tmp/whisper_stt/record.wav ~/stt-audio-tests/audio/test.wav
 ```bash
  stt-compare ~/stt-audio-tests/audio/test.wav
 ```
-
-### Why Compare?
-Different whisper models trade speed for accuracy. This tool lets you directly compare outputs on identical audio
 
 ## Notes
 
