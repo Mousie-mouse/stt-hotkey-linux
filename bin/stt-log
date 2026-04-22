@@ -1,13 +1,16 @@
 #!/bin/bash
 
-LOG="/tmp/whisper_stt/last_run.log"
+TMP_DIR="/tmp/whisper_stt"
+LOG="$TMP_DIR/last_run.log"
 
-if [ ! -f "$LOG" ]; then
-    echo "No log found"
+if [ ! -d "$TMP_DIR" ]; then
+    notify-send "STT Log" "No STT session found yet. Run 'stt' first." >/dev/null 2>&1 || true
     exit 1
 fi
 
-cat "$LOG"
+if [ ! -s "$LOG" ]; then
+    notify-send "STT Log" "No log available yet." >/dev/null 2>&1 || true
+    exit 1
+fi
 
-# Open in terminal for visibility
-x-terminal-emulator -e bash -c "echo '--- STT LOG ---'; cat $LOG; echo; read -p 'Press enter to close...'"
+x-terminal-emulator -e bash -c "echo '--- STT LOG ---'; cat \"$LOG\"; echo; read -p 'Press enter to close...'"
