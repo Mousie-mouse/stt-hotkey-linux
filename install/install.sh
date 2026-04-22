@@ -25,6 +25,17 @@ install -m 755 "$(dirname "$0")/../bin/stt-mode-multi-auto" "$BINDIR/stt-mode-mu
 install -m 755 "$(dirname "$0")/../bin/stt-mode-status" "$BINDIR/stt-mode-status"
 install -m 755 "$(dirname "$0")/../bin/stt-compare" "$BINDIR/stt-compare"
 
+# Ensure ~/.local/bin is on PATH for future shells
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+
+if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
+  if [ -f "$HOME/.profile" ]; then
+    grep -Fqx "$PATH_LINE" "$HOME/.profile" || echo "$PATH_LINE" >> "$HOME/.profile"
+  else
+    echo "$PATH_LINE" >> "$HOME/.profile"
+  fi
+fi
+
 if ! command -v git >/dev/null 2>&1; then
   echo "Missing dependency: git"
   exit 1
@@ -87,13 +98,24 @@ cat <<EOF
 
 Install complete.
 
+whisper-cli found: $WHISPER_BIN
+base model found: $BASE_MODEL
+
+Available capture devices:
+$(arecord -l 2>/dev/null || true)
+
 Next steps:
   1. If your mic records silence, run:
        arecord -l
        arecord -L | sed -n '1,120p'
        alsamixer
-  2. Then set your Cinnamon shortcut to:
+  2. Start STT:
        $HOME/.local/bin/stt
+
+Note:
+  ~/.local/bin was added to ~/.profile for future sessions.
+  Open a new terminal or log out/in before using plain 'stt'.
+
 
 Optional smoke test:
   $WHISPER_BIN -m $BASE_MODEL -f /path/to/test.wav -l en

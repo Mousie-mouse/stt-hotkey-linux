@@ -1,4 +1,11 @@
 # stt-hotkey-linux
+> “Turn your voice into text anywhere on Linux—no cloud required.”
+
+## Demo
+
+![stt demo](assets/demo.gif)
+
+---
 
 Local-first speech-to-text toolkit for Linux (Cinnamon/Mint) using `whisper.cpp`. Hotkey-driven recording, clipboard copy, model switching (fast/better/multilingual), and a simple installer.
 
@@ -6,13 +13,14 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 
 ## What it does
 
-- Press once to start recording
-- Press again to stop and transcribe
-- Copy transcript to clipboard
-- Switch between fast English, better English, and multilingual modes
+- 🎤 Press a hotkey → speak → Press again to stop and transcribe → text appears in your clipboard
+- 🔒 Fully local (no cloud, no API keys)
 - Reset stuck state
 - View logs
-- Re-copy the last transcript
+- Re-copy last to clipboard
+- **Advanced** 🧠 Multiple Whisper models (fast vs accurate - this utility uses minimum viable langauge model sizes)
+- **Advanced** 🧪 model comparison tool (`stt-compare`)
+- **Advanced** Switch between fast English, better English, and multilingual modes
 
 ## Requirements
 
@@ -23,10 +31,12 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 
 ```bash
 sudo apt update
-sudo apt install git cmake build-essential ffmpeg sox xclip alsa-utils libnotify-bin
+sudo apt install git cmake build-essential ccache ffmpeg sox xclip alsa-utils libnotify-bin
 ```
 
-## Install
+---
+
+## 🚀 Quick Install
 
 Clone the repo and run the installer:
 
@@ -44,11 +54,13 @@ The installer automatically:
 - Clones and builds whisper.cpp (if missing)
 - Downloads the base.en model
 - Creates runtime directories:
->-  ~/stt-audio-tests/audio
->- ~/stt-audio-tests/transcripts
+	- ~/stt-audio-tests/audio
+	- ~/stt-audio-tests/transcripts
 - Verifies installation
 
 No manual whisper setup required.
+
+**Advanced** commands will prompt you to intstall the needed models on the command's first use, then install
 
 ## First Run
 
@@ -61,6 +73,8 @@ stt
 ```
 
 Your transcript will be copied to the clipboard.
+
+---
 
 ## Troubleshooting Audio (Important)
 
@@ -87,9 +101,21 @@ Common issue:
 
 - Hardware often requires stereo (2 channels)
 - plughw: is required for resampling
+- ALSA doesn't play with all microphone configurations
+- Some systems are displaying no notifcations despite functioning normally otherwise
+
+If `stt` is not found immediately after install, open a new terminal or use:
+
+```bash
+~/.local/bin/stt
 
 ## Suggested shortcuts
 
+Hotkeys (Cinnamon)
+Gestures (Cinnamon)
+
+
+Bind these in System Settings → Keyboard → Shortcuts:
 - `Super+Z` → `stt`
 - `Super+Shift+Z` → `stt-reset`
 - `Ctrl+Shift+L` → `stt-log`
@@ -100,7 +126,9 @@ Common issue:
 - **Advanced** `Super+Alt+0` → `stt-mode-status`
 - **Advanced** `Super+Alt+c`→ `stt-compare`
 
-## Models (Optional)
+---
+
+## Models (**Advanced** Optional)
 
 By default, the installer downloads only:
 
@@ -108,15 +136,9 @@ By default, the installer downloads only:
 
 This keeps install size small and fast.
 
----
-
 ### Install additional models
 
 If you want higher accuracy or multilingual support:
-
-```bash
-cd ~/whisper.cpp
-```
 
 - Better English accuracy
 ```bash 
@@ -127,9 +149,10 @@ cd ~/whisper.cpp
 ./models/download-ggml-model.sh small
 ```
 
-If you want to add larger models, you can install the others from whisper.cpp. I wanted minimum viable tool. If you have extra VRAM - go for it. (you will have fun with the stt-compare tool) 
+If you want to add larger models, they are available, but I did not share them because the utility is more helpful to me when it is fast.  
 
 ## When to use what
+
 - Use `base.en` → quick notes, commands, low CPU
 - Use `small.en` → better transcription quality
 - Use `small` → mixed languages / unknown language
@@ -143,17 +166,30 @@ stt-mode-fast-en
  ```bash
  stt-model-better-en
 ```
-- `small` (*auto-detects multiple languages* (This is where I would recommend a larger whisper model))
+- `small` (I recommend a larger whisper model if you are consistently using multiple langauges during conversations)
+```bash
+stt-model-multi-auto
+```
+- Check current STT model
+```bash
+stt-status
+```
+
+---
 
 ## Model Comparison Tool (`stt-compare`)
 
 This project includes a utility for comparing Whisper models on the same audio input.
 
-It runs multiple models, saves transcripts, shows differences, and copies the best result to your clipboard. 
+What it does
+- runs base.en and small.en
+- saves transcropts
+- shows differences
+- copies best result to clipboard
 
 ### Usage
 
-Run on the default test file:
+Run on the default test file or most recent transcription:
 
 ```bash
 stt-compare
@@ -173,32 +209,45 @@ What it does
 - Displays both outputs w side-to-side comparison
 - Copies result to the clipboard
 
-### Example Workflow
+---
 
-- Record audio
-```bash 
-stt
-sleep 5
-stt
-```
-- Save the recording
-```bash
-mkdir -p ~/stt-audio-tests/audio
-cp /tmp/whisper_stt/record.wav ~/stt-audio-tests/audio/test.wav
-```
-- Compare models
+## 🧠 Why this exists
 
-```bash
- stt-compare ~/stt-audio-tests/audio/test.wav
-```
+Most speech-to-text tools:
 
-## Notes
+- require cloud APIs
+- collect data
+- introduce latency
 
-This repo does not package `whisper.cpp` itself. It expects a local build in `~/whisper.cpp` and uses the current `whisper-cli` binary from that build.
+This tool is:
 
-## Security / Privacy Notes
+- offline
+- fast
+- fully under your control
+
+---
+
+## ⚠️  Notes
+
+- Requires working microphone input (ALSA)
+- Uses whisper.cpp models locally
+- First install will take a few minutes (build + model download)
+
+Security / Privacy
 
 - Runs fully locally (no external API calls)
 - Audio never leaves the machine
 - No persistent storage of recordings
 - Minimal dependencies
+
+---
+
+### 🤝 Contributing
+
+Issues and PRs welcome. *add socials and walets*
+
+---
+
+### 📜 License
+
+MIT
