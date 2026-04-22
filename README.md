@@ -14,12 +14,12 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 - View logs
 - Re-copy the last transcript
 
-=====## Requirements
+## Requirements
 
 - Linux (tested and built with Mint/Cinnamon)
 - X11 clipboard support
 
-## packages
+## Packages
 
 ```bash
 sudo apt update
@@ -44,11 +44,11 @@ The installer automatically:
 - Clones and builds whisper.cpp (if missing)
 - Downloads the base.en model
 - Creates runtime directories:
--- ~/stt-audio-tests/audio
--- ~/stt-audio-tests/transcripts
+>-  ~/stt-audio-tests/audio
+>- ~/stt-audio-tests/transcripts
 - Verifies installation
 
-No manual whisper setup required. (I include manual install in troubleshooter)
+No manual whisper setup required.
 
 ## First Run
 
@@ -61,6 +61,7 @@ stt
 ```
 
 Your transcript will be copied to the clipboard.
+
 ## Troubleshooting Audio (Important)
 
 If transcription returns empty:
@@ -87,17 +88,17 @@ Common issue:
 - Hardware often requires stereo (2 channels)
 - plughw: is required for resampling
 
-## Suggested shortcuts (`stt-mode-better-en`, `stt-mode-multi-auto`, and `stt-compare` require `small.en` and `small` models (or you could add larger models manually))
+## Suggested shortcuts
 
 - `Super+Z` → `stt`
 - `Super+Shift+Z` → `stt-reset`
 - `Ctrl+Shift+L` → `stt-log`
 - `Super+Shift+V` → `stt-last`
-- `Super+Alt+1` → `stt-mode-fast-en`
-- `Super+Alt+2` → `stt-mode-better-en`
-- `Super+Alt+3` → `stt-mode-multi-auto`
-- `Super+Alt+0` → `stt-mode-status`
-- `Super+Alt+c`→ `stt-compare`
+- **Advanced** `Super+Alt+1` → `stt-mode-fast-en`
+- **Advanced** `Super+Alt+2` → `stt-mode-better-en`
+- **Advanced** `Super+Alt+3` → `stt-mode-multi-auto`
+- **Advanced** `Super+Alt+0` → `stt-mode-status`
+- **Advanced** `Super+Alt+c`→ `stt-compare`
 
 ## Models (Optional)
 
@@ -118,11 +119,15 @@ cd ~/whisper.cpp
 ```
 
 - Better English accuracy
-```bash ./models/download-ggml-model.sh small.en
+```bash 
+./models/download-ggml-model.sh small.en
 ```
 - Multilingual model (auto language detection)
-```bash ./models/download-ggml-model.sh small
+```bash 
+./models/download-ggml-model.sh small
 ```
+
+If you want to add larger models, you can install the others from whisper.cpp. I wanted minimum viable tool. If you have extra VRAM - go for it. (you will have fun with the stt-compare tool) 
 
 ## When to use what
 - Use `base.en` → quick notes, commands, low CPU
@@ -138,7 +143,7 @@ stt-mode-fast-en
  ```bash
  stt-model-better-en
 ```
-- `small` (*auto-detects multiple languages* (usually, if you have the VRAM, this is where I would recommend a larger whisper model))
+- `small` (*auto-detects multiple languages* (This is where I would recommend a larger whisper model))
 
 ## Model Comparison Tool (`stt-compare`)
 
