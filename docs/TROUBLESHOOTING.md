@@ -94,11 +94,13 @@ bash ./models/download-ggml-model.sh base.en
 ```
 For a better English model:
 
-```bash ./models/download-ggml-model.sh small.en
+```bash 
+./models/download-ggml-model.sh small.en
 ```
 For multilingual transcription:
 
-```bash ./models/download-ggml-model.sh small
+```bash
+ ./models/download-ggml-model.sh small
 ```
 whisper.cpp uses models like ggml-base.en.bin, and the official repo provides the download script for those files.
 
@@ -166,7 +168,8 @@ Do not run git pull ./install.sh; that makes Git interpret ./install.sh as an ar
 These are the fastest checks when something is off:
 
 ### verify script + helpers are installed
-```bash ls -l ~/.local/bin/stt ~/.local/bin/stt-*
+```
+bash ls -l ~/.local/bin/stt ~/.local/bin/stt-*
 ```
 ### verify capture devices
 ```bash 
@@ -174,19 +177,25 @@ arecord -l
 arecord -L | sed -n '1,120p'
 ```
 ### verify model exists
-```bash ls -l ~/whisper.cpp/models/ggml-base.en.bin
+```bash
+ ls -l ~/whisper.cpp/models/ggml-base.en.bin
 ```
 ### inspect current runtime state
-```bash ls -l /tmp/whisper_stt
+```bash
+ ls -l /tmp/whisper_stt
 ```
 # inspect current transcript
-```bash cat /tmp/whisper_stt/last_transcript.txt
+```bash
+ cat /tmp/whisper_stt/last_transcript.txt
 ```
 # inspect raw recording for playback test
-```bash aplay /tmp/whisper_stt/record.wav
+```bash
+ aplay /tmp/whisper_stt/record.wav
 ```
 # trace script execution (debug trace)
-```bash -x ~/.local/bin/stt 2>&1 | tee /tmp/stt-debug.txt ```
+```bash
+-x ~/.local/bin/stt 2>&1 | tee /tmp/stt-debug.txt
+ ```
 
 ## 11. Known hardware-specific note
 
@@ -196,4 +205,4 @@ Example:
 ```bash
 arecord -D plughw:CARD=PCH,DEV=0 -q -f S16_LE -c 1 -r 16000 "$WAV_FILE" >"$LOG_FILE" 2>&1 &
 ```
-If default capture works on your system, leave it alone. If your machine records silence or the wrong source, use arecord -l, arecord -L, and alsamixer to identify the correct capture device first.
+If default capture works on your system, I'd leave it alone. If your machine records silence or the wrong source, use arecord -l, arecord -L, and alsamixer to identify the correct capture device.
