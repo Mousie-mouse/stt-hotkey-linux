@@ -1,96 +1,91 @@
 #!/bin/bash
 set -euo pipefail
 
+TMP_DIR="/tmp/whisper_stt"
 TEST_DIR="$HOME/stt-audio-tests"
 AUDIO_DIR="$TEST_DIR/audio"
 TRANSCRIPT_DIR="$TEST_DIR/transcripts"
-DEFAULT_AUDIO="$AUDIO_DIR/base-test.wav"
-
-BASE_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
-SMALL_MODEL="$HOME/whisper.cpp/models/ggml-small.en.bin"
-BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
 
 mkdir -p "$AUDIO_DIR" "$TRANSCRIPT_DIR"
 
-usage() {
-    echo "Usage:"
-    echo "  stt-compare [audio-file]"
-    echo
-    echo "Examples:"
-    echo "  stt-compare"
-    echo "  stt-compare ~/stt-audio-tests/audio/base-test.wav"
-    exit 1
+BASE_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
+SMALL_MODEL="$HOME/whisper.cpp/models/ggml-small.en.bin"
+
+BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT Compare" "$1" >/dev/null 2>&1 || true
+    fi
 }
 
-if [ ! -x "$BIN" ]; then
-    echo "Error: whisper-cli not found at $BIN"
-    exit 1
-fi
+ensure_model() {
+    local model_name="$1"
+    local model_path="$2"
+    local whisper_dir="$HOME/whisper.cpp"
 
-if [ ! -f "$BASE_MODEL" ]; then
-    echo "Error: base model not found at $BASE_MODEL"
-    exit 1
-fi
+    if [ -f "$model_path" ]; then
+        return 0
+    fi
 
-if [ ! -f "$SMALL_MODEL" ]; then
-    echo "Error: small model not found at $SMALL_MODEL"
-    exit 1
-fi
+    if [ -t 0 ] && [ -t 1 ]; then
+        echo
+        echo "Required model is not installed: $model_name"
+        echo "Install now? [y/N]"
+        read -r reply
+        case "$reply" in
+            y|Y|yes|YES)
+                cd "$whisper_dir"
+                bash ./models/download-ggml-model.sh "$model_name"
+                ;;
+            *)
+                echo "Cancelled."
+                return 1
+                ;;
+        esac
+    else
+        notify "Model '$model_name' missing. Run install in terminal."
+        return 1
+    fi
 
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-    usage
-fi
-
-INPUT_AUDIO="${1:-$DEFAULT_AUDIO}"
-
-if [ ! -f "$INPUT_AUDIO" ]; then
-    echo "Error: audio file not found: $INPUT_AUDIO"
-    exit 1
-fi
-
-BASENAME="$(basename "$INPUT_AUDIO")"
-STEM="${BASENAME%.*}"
-
-BASE_OUT="$TRANSCRIPT_DIR/${STEM}.base.txt"
-SMALL_OUT="$TRANSCRIPT_DIR/${STEM}.small.txt"
-
-cleanup_whisper_output() {
-    sed -E 's/\[[^]]*\][[:space:]]*//g' \
-    | sed -E '/^\s*$/d' \
-    | sed -E '/^whisper_/d'
+    [ -f "$model_path" ]
 }
 
-echo "Running base.en on: $INPUT_AUDIO"
-"$BIN" -m "$BASE_MODEL" -f "$INPUT_AUDIO" -l en \
-    | cleanup_whisper_output > "$BASE_OUT"
+# Ensure models
+ensure_model "base.en" "$BASE_MODEL" || exit 1
+ensure_model "small.en" "$SMALL_MODEL" || exit 1
 
-echo "Running small.en on: $INPUT_AUDIO"
-"$BIN" -m "$SMALL_MODEL" -f "$INPUT_AUDIO" -l en \
-    | cleanup_whisper_output > "$SMALL_OUT"
+# Input file
+INPUT_FILE="${1:-$TMP_DIR/record.wav}"
 
-echo
-echo "Saved transcripts:"
-echo "  $BASE_OUT"
-echo "  $SMALL_OUT"
-echo
-
-echo "===== base.en ====="
-cat "$BASE_OUT"
-echo
-echo "===== small.en ====="
-cat "$SMALL_OUT"
-echo
-
-if command -v sdiff >/dev/null 2>&1; then
-    echo "===== side-by-side diff ====="
-    sdiff -s "$BASE_OUT" "$SMALL_OUT" || true
-else
-    echo "===== diff ====="
-    diff -u "$BASE_OUT" "$SMALL_OUT" || true
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "No input audio found."
+    exit 1
 fi
 
+TIMESTAMP=$(date +%s)
+
+BASE_OUT="$TRANSCRIPT_DIR/base-$TIMESTAMP.txt"
+SMALL_OUT="$TRANSCRIPT_DIR/small-$TIMESTAMP.txt"
+
+echo "Running base.en..."
+BASE_TEXT="$($BIN -m "$BASE_MODEL" -f "$INPUT_FILE" -l en 2>/dev/null | sed -E 's/\[[^]]*\][[:space:]]*//g')"
+echo "$BASE_TEXT" > "$BASE_OUT"
+
+echo "Running small.en..."
+SMALL_TEXT="$($BIN -m "$SMALL_MODEL" -f "$INPUT_FILE" -l en 2>/dev/null | sed -E 's/\[[^]]*\][[:space:]]*//g')"
+echo "$SMALL_TEXT" > "$SMALL_OUT"
+
+echo
+echo "=== base.en ==="
+echo "$BASE_TEXT"
+echo
+echo "=== small.en ==="
+echo "$SMALL_TEXT"
+
+# Copy better result (small)
 if command -v xclip >/dev/null 2>&1; then
-    cat "$SMALL_OUT" | xclip -selection clipboard
-    echo
-    echo "small.en output copied to clipboard."
+    printf '%s' "$SMALL_TEXT" | xclip -selection clipboard
 fi
+
+notify "Comparison complete (small copied)"

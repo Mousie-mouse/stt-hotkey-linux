@@ -9,8 +9,44 @@ notify() {
     fi
 }
 
+ensure_model() {
+    local model_name="$1"
+    local model_path="$2"
+    local whisper_dir="$HOME/whisper.cpp"
+
+    if [ -f "$model_path" ]; then
+        return 0
+    fi
+
+    if [ -t 0 ] && [ -t 1 ]; then
+        echo
+        echo "Required model is not installed: $model_name"
+        echo "Install now? [y/N]"
+        read -r reply
+        case "$reply" in
+            y|Y|yes|YES)
+                cd "$whisper_dir"
+                bash ./models/download-ggml-model.sh "$model_name"
+                ;;
+            *)
+                echo "Cancelled."
+                return 1
+                ;;
+        esac
+    else
+        notify "Model '$model_name' missing. Run install in terminal."
+        return 1
+    fi
+
+    [ -f "$model_path" ]
+}
+
+MODEL_PATH="$HOME/whisper.cpp/models/ggml-small.bin"
+
+ensure_model "small" "$MODEL_PATH" || exit 1
+
 printf '%s' "auto" > "$TMP_DIR/current_language"
-printf '%s' "$HOME/whisper.cpp/models/ggml-small.bin" > "$TMP_DIR/current_model"
+printf '%s' "$MODEL_PATH" > "$TMP_DIR/current_model"
 : > "$TMP_DIR/current_extra"
 
 notify "Mode: multilingual (auto detect)"
