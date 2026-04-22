@@ -1,9 +1,9 @@
 # stt-hotkey-linux
-> “Turn your voice into text anywhere on Linux—no cloud required.”
+ *Turn your voice into text anywhere on Linux you can paste your clipboard, **no cloud required.**
 
 ## Demo
 
-![stt demo](assets/demo.gif)
+![stt demo](assets/sttdemo.gif)
 
 ---
 
@@ -18,8 +18,8 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 - Reset stuck state
 - View logs
 - Re-copy last to clipboard
-- **Advanced** 🧠 Multiple Whisper models (fast vs accurate - this utility uses minimum viable langauge model sizes)
-- **Advanced** 🧪 model comparison tool (`stt-compare`)
+- **Advanced** Multiple Whisper models (fast vs accurate - this utility uses minimum viable langauge model sizes)
+- **Advanced** Model comparison tool (`stt-compare`)
 - **Advanced** Switch between fast English, better English, and multilingual modes
 
 ## Requirements
@@ -108,7 +108,7 @@ If `stt` is not found immediately after install, open a new terminal or use:
 
 ```bash
 ~/.local/bin/stt
-
+```
 ## Suggested shortcuts
 
 Hotkeys (Cinnamon)
