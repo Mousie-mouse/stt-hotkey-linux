@@ -7,13 +7,16 @@ WHISPER_DIR="${HOME}/whisper.cpp"
 WHISPER_BIN="${WHISPER_DIR}/build/bin/whisper-cli"
 BASE_MODEL="${WHISPER_DIR}/models/ggml-base.en.bin"
 TEST_DIR="$HOME/stt-audio-tests"
+OUTPUT_DIR="$HOME/stt-output"
 
 mkdir -p "$HOME/stt-audio-tests/audio"
 mkdir -p "$HOME/stt-audio-tests/transcripts"
+mkdir -p "$OUTPUT_DIR"
 
 mkdir -p "$BINDIR"
 
 echo "Created test directories at $TEST_DIR"
+echo "Created transcript output directory at $OUTPUT_DIR"
 
 install -m 755 "$(dirname "$0")/../bin/stt" "$BINDIR/stt"
 install -m 755 "$(dirname "$0")/../bin/stt-reset" "$BINDIR/stt-reset"
@@ -100,6 +103,7 @@ Install complete.
 
 whisper-cli found: $WHISPER_BIN
 base model found: $BASE_MODEL
+transcript output directory: $OUTPUT_DIR
 
 Available capture devices:
 $(arecord -l 2>/dev/null || true)

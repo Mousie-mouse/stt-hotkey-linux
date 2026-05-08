@@ -7,6 +7,8 @@ WAV_FILE="$TMP_DIR/record.wav"
 LOG_FILE="$TMP_DIR/last_run.log"
 LAST_TXT="$TMP_DIR/last_transcript.txt"
 LOCK_DIR="$TMP_DIR/lock"
+OUTPUT_DIR="${STT_OUTPUT_DIR:-$HOME/stt-output}"
+OUTPUT_LATEST="$OUTPUT_DIR/latest.txt"
 
 MODEL_FILE="$TMP_DIR/current_model"
 LANG_FILE="$TMP_DIR/current_language"
@@ -18,7 +20,7 @@ DEFAULT_EXTRA=""
 
 BIN="$HOME/whisper.cpp/build/bin/whisper-cli"
 
-mkdir -p "$TMP_DIR"
+mkdir -p "$TMP_DIR" "$OUTPUT_DIR"
 
 notify() {
     if command -v notify-send >/dev/null 2>&1; then
@@ -125,9 +127,14 @@ if [ -f "$PID_FILE" ]; then
         exit 1
     fi
 
-    printf '%s' "$TEXT" > "$LAST_TXT"
+    TIMESTAMP="$(date '+%Y%m%d-%H%M%S')"
+    OUTPUT_FILE="$OUTPUT_DIR/stt-$TIMESTAMP.txt"
+
+    printf '%s\n' "$TEXT" > "$LAST_TXT"
+    printf '%s\n' "$TEXT" > "$OUTPUT_LATEST"
+    printf '%s\n' "$TEXT" > "$OUTPUT_FILE"
     printf '%s' "$TEXT" | xclip -selection clipboard
-    notify "Copied to clipboard"
+    notify "Copied to clipboard and saved"
     exit 0
 fi
 

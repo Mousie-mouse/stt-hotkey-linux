@@ -1,16 +1,25 @@
 #!/bin/bash
 
-TMP_DIR="/tmp/whisper_stt"
-LOG="$TMP_DIR/last_run.log"
+OUTPUT_DIR="${STT_OUTPUT_DIR:-$HOME/stt-output}"
 
-if [ ! -d "$TMP_DIR" ]; then
-    notify-send "STT Log" "No STT session found yet. Run 'stt' first." >/dev/null 2>&1 || true
-    exit 1
+mkdir -p "$OUTPUT_DIR"
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "STT Output" "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+if command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$OUTPUT_DIR" >/dev/null 2>&1 &
+    notify "Opened $OUTPUT_DIR"
+    exit 0
 fi
 
-if [ ! -s "$LOG" ]; then
-    notify-send "STT Log" "No log available yet." >/dev/null 2>&1 || true
-    exit 1
+if command -v x-terminal-emulator >/dev/null 2>&1; then
+    STT_OUTPUT_DIR="$OUTPUT_DIR" x-terminal-emulator -e bash -c 'echo "--- STT OUTPUT ---"; echo "$STT_OUTPUT_DIR"; echo; ls -lt "$STT_OUTPUT_DIR"; echo; read -p "Press enter to close..."'
+    exit 0
 fi
 
-x-terminal-emulator -e bash -c "echo '--- STT LOG ---'; cat \"$LOG\"; echo; read -p 'Press enter to close...'"
+printf '%s\n' "$OUTPUT_DIR"
+ls -lt "$OUTPUT_DIR"

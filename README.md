@@ -14,9 +14,10 @@ Local speech-to-text hotkey toolkit for Linux Mint / Cinnamon using `whisper.cpp
 ## What it does
 
 - 🎤 Press a hotkey → speak → Press again to stop and transcribe → text appears in your clipboard
+- Saves each transcript to `~/stt-output`
 - 🔒 Fully local (no cloud, no API keys)
 - Reset stuck state
-- View logs
+- Open saved transcript output folder
 - Re-copy last to clipboard
 - **Advanced** Multiple Whisper models (fast vs accurate - this utility uses minimum viable langauge model sizes)
 - **Advanced** Model comparison tool (`stt-compare`)
@@ -56,6 +57,8 @@ The installer automatically:
 - Creates runtime directories:
 	- ~/stt-audio-tests/audio
 	- ~/stt-audio-tests/transcripts
+- Creates transcript output directory:
+	- ~/stt-output
 - Verifies installation
 
 No manual whisper setup required.
@@ -72,7 +75,9 @@ sleep 5
 stt
 ```
 
-Your transcript will be copied to the clipboard.
+Your transcript will be copied to the clipboard and saved to `~/stt-output`.
+
+To use a different output location, set `STT_OUTPUT_DIR` for the `stt`, `stt-log`, and `stt-last` commands.
 
 ---
 
@@ -118,7 +123,7 @@ Gestures (Cinnamon)
 Bind these in System Settings → Keyboard → Shortcuts:
 - `Super+Z` → `stt`
 - `Super+Shift+Z` → `stt-reset`
-- `Ctrl+Shift+L` → `stt-log`
+- `Ctrl+Shift+L` → `stt-log` opens `~/stt-output`
 - `Super+Shift+V` → `stt-last`
 - **Advanced** `Super+Alt+1` → `stt-mode-fast-en`
 - **Advanced** `Super+Alt+2` → `stt-mode-better-en`
@@ -237,7 +242,8 @@ Security / Privacy
 
 - Runs fully locally (no external API calls)
 - Audio never leaves the machine
-- No persistent storage of recordings
+- Recordings stay temporary in `/tmp/whisper_stt`
+- Transcripts are saved locally in `~/stt-output`
 - Minimal dependencies
 
 ---

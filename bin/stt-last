@@ -1,6 +1,8 @@
 #!/bin/bash
 
-FILE="/tmp/whisper_stt/last_transcript.txt"
+OUTPUT_DIR="${STT_OUTPUT_DIR:-$HOME/stt-output}"
+FILE="$OUTPUT_DIR/latest.txt"
+TMP_FILE="/tmp/whisper_stt/last_transcript.txt"
 
 notify() {
     if command -v notify-send >/dev/null 2>&1; then
@@ -8,10 +10,19 @@ notify() {
     fi
 }
 
+if [ ! -s "$FILE" ] && [ -s "$TMP_FILE" ]; then
+    FILE="$TMP_FILE"
+fi
+
 if [ ! -s "$FILE" ]; then
     notify "No saved transcript"
     exit 1
 fi
 
-cat "$FILE" | xclip -selection clipboard
+if ! command -v xclip >/dev/null 2>&1; then
+    notify "xclip not installed"
+    exit 1
+fi
+
+xclip -selection clipboard < "$FILE"
 notify "Last transcript copied"

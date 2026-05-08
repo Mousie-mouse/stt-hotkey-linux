@@ -186,7 +186,11 @@ arecord -L | sed -n '1,120p'
 ```
 # inspect current transcript
 ```bash
- cat /tmp/whisper_stt/last_transcript.txt
+ cat ~/stt-output/latest.txt
+```
+# inspect saved transcript output
+```bash
+ ls -lt ~/stt-output
 ```
 # inspect raw recording for playback test
 ```bash
