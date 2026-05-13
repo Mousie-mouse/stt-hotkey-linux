@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_DIR="${STT_REPO_DIR:-$HOME/stt-hotkey-linux}"
+
+echo "Updating stt-hotkey-linux..."
+echo "Repo: $REPO_DIR"
+echo
+
+if [ ! -d "$REPO_DIR/.git" ]; then
+    echo "ERROR: Could not find git repo at:"
+    echo "  $REPO_DIR"
+    echo
+    echo "Set STT_REPO_DIR if your repo lives somewhere else:"
+    echo "  export STT_REPO_DIR=/path/to/stt-hotkey-linux"
+    exit 1
+fi
+
+cd "$REPO_DIR"
+
+echo "Checking local changes..."
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "ERROR: Local changes detected."
+    echo
+    echo "Run this to inspect:"
+    echo "  cd \"$REPO_DIR\""
+    echo "  git status"
+    echo
+    echo "Not updating because this could overwrite your work."
+    exit 1
+fi
+
+echo "Pulling latest changes..."
+git pull --ff-only origin main
+
+echo
+echo "Ensuring scripts are executable..."
+chmod +x bin/* install/install.sh
+
+echo
+echo "Reinstalling commands to ~/.local/bin..."
+./install/install.sh
+
+echo
+echo "Update complete."
+echo
+
+if command -v stt-mode-status >/dev/null 2>&1; then
+    stt-mode-status || true
+fi

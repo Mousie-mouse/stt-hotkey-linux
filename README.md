@@ -1,6 +1,38 @@
 # stt-hotkey-linux
  *Turn your voice into text anywhere on Linux you can paste your clipboard, **no cloud required.**
 
+## What this does
+
+`stt-hotkey-linux` is a local-first speech-to-text hotkey utility for Linux.
+
+Press a keyboard shortcut, speak into your microphone, press again to stop, and get a local Whisper transcript. The project is built around `whisper.cpp`, standard Linux tools, and user-controlled microphone capture.
+
+The goal is simple: make voice input useful without cloud transcription, accounts, always-listening assistants, or opaque audio pipelines.
+
+## Good fit
+
+This tool works best for short-form voice drafting: roughly 1–1000 characters of speech-to-text output.
+
+It is useful for:
+
+- captions
+- short scripts
+- notes to self
+- README edits
+- issue comments
+- quick emails
+- journal fragments
+- accessibility workflows
+- creator drafts
+
+It is not designed as a perfect meeting transcription system. It is designed for quick, local, user-controlled voice capture.
+
+## Recording length
+
+`stt-hotkey-linux` is tuned for short-form dictation. Recordings around 1–90 seconds are the safest target.
+
+Longer recordings may work, but quiet sections, dead air, breathing, fan noise, or distant speech can increase the chance of repeated phrase hallucinations. Use shorter captures for best results.
+
 ## Demo
 
 ![stt demo](assets/sttdemo.gif)
@@ -45,23 +77,21 @@ Clone the repo and run the installer:
 cd ~
 git clone https://github.com/Mousie-mouse/stt-hotkey-linux.git
 cd ~/stt-hotkey-linux
+```
+```bash
+chmod +x install/install.sh
 ./install/install.sh
 ```
 ### What the installer does
 
-The installer automatically:
+The installer will:
 
-- Installs all stt-* scripts to ~/.local/bin
-- Clones and builds whisper.cpp (if missing)
-- Downloads the base.en model
-- Creates runtime directories:
-	- ~/stt-audio-tests/audio
-	- ~/stt-audio-tests/transcripts
-- Creates transcript output directory:
-	- ~/stt-output
-- Verifies installation
-
-No manual whisper setup required.
+- create local working directories
+- install STT commands to ~/.local/bin
+- build or verify whisper.cpp
+- download required Whisper models
+- verify microphone capture tools
+- print recommended next steps
 
 **Advanced** commands will prompt you to intstall the needed models on the command's first use, then install
 
@@ -114,24 +144,66 @@ If `stt` is not found immediately after install, open a new terminal or use:
 ```bash
 ~/.local/bin/stt
 ```
+---
 ## Suggested shortcuts
 
-Hotkeys (Cinnamon)
-Gestures (Cinnamon)
+### Hotkeys (Cinnamon)
 
+The only shortcut most users need to remember is:
 
-Bind these in System Settings → Keyboard → Shortcuts:
-- `Super+Z` → `stt`
-- `Super+Shift+Z` → `stt-reset`
-- `Ctrl+Shift+L` → `stt-log` opens `~/stt-output`
-- `Super+Shift+V` → `stt-last`
-- **Advanced** `Super+Alt+1` → `stt-mode-fast-en`
-- **Advanced** `Super+Alt+2` → `stt-mode-better-en`
-- **Advanced** `Super+Alt+3` → `stt-mode-multi-auto`
-- **Advanced** `Super+Alt+0` → `stt-mode-status`
-- **Advanced** `Super+Alt+c`→ `stt-compare`
+| Shortcut | Command | Purpose |
+|---|---|---|
+| `Super+Z` | `/home/$USER/.local/bin/stt` | Start/stop local STT recording |
+
+If you want to run additional models, I recommend adding the hotkey for every model you use and add 'stt-mode-status' so you can toggle the models and confirm your current model.
+
+These are useful but not required.
+
+| Shortcut | Command | Purpose |
+|---|---|---|
+| `Super+Shift+Z` | `/home/$USER/.local/bin/stt-reset` | Stop/reset a stuck recording |
+| `Super+Alt+Z` | `/home/$USER/.local/bin/stt-last` | Show the last transcript |
+| `Super+Ctrl+Z` | `/home/$USER/.local/bin/stt-log` | Show the last debug log |
+
+Everything besides `Super+Z` is recovery, configuration, or debugging, but any of the commands can be hotkeys. They are all executable.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `stt` | Start/stop recording and transcribe locally |
+| `stt-reset` | Stop/reset a stuck recording |
+| `stt-last` | Show the last transcript |
+| `stt-log` | Show the last debug log |
+| `stt-mode-fast-en` | Switch to faster English mode |
+| `stt-mode-better-en` | Switch to better English mode using `small.en` |
+| `stt-mode-multi-auto` | Switch to multilingual auto-detect mode |
+| `stt-mode-status` | Show the current STT mode |
+| `stt-compare` | Compare model output on a test recording |
+| `stt-doctor` | Check install, dependencies, models, microphone, and PATH |
+| `stt-update` | Pull latest GitHub changes and reinstall commands |
+
+### Gestures (OS dependent)
+
+Optional. Bind the same commands above to gestures if you prefer touchpad activation, or any other type of shortcuts you want to configure. 
 
 ---
+
+## Updating
+
+After installation, update with:
+
+```bash
+stt-update
+```
+
+Manual update:
+
+```bash
+cd ~/stt-hotkey-linux
+git pull --ff-only origin main
+./install/install.sh
+```
 
 ## Models (**Advanced** Optional)
 
@@ -149,7 +221,7 @@ If you want higher accuracy or multilingual support:
 ```bash 
 ./models/download-ggml-model.sh small.en
 ```
-- Multilingual model (auto language detection)
+- Multilingual model (auto language detection.
 ```bash 
 ./models/download-ggml-model.sh small
 ```
@@ -161,24 +233,6 @@ If you want to add larger models, they are available, but I did not share them b
 - Use `base.en` → quick notes, commands, low CPU
 - Use `small.en` → better transcription quality
 - Use `small` → mixed languages / unknown language
-
-## Switching modes
-- `base.en` 
-```bash
-stt-mode-fast-en
-```
-- `small.en`
- ```bash
- stt-model-better-en
-```
-- `small` (I recommend a larger whisper model if you are consistently using multiple langauges during conversations)
-```bash
-stt-model-multi-auto
-```
-- Check current STT model
-```bash
-stt-status
-```
 
 ---
 
@@ -216,21 +270,85 @@ What it does
 
 ---
 
-## 🧠 Why this exists
+## Troubleshooting
 
-Most speech-to-text tools:
+Run:
 
-- require cloud APIs
-- collect data
-- introduce latency
+```bash
+stt-doctor
+```
+`stt-doctor` checks:
 
-This tool is:
+- installed STT commands
+- ~/.local/bin PATH setup
+- whisper.cpp
+- required models
+- microphone capture devices
+- working directories
+- recent logs
+- current STT mode
 
-- offline
-- fast
-- fully under your control
+To inspect the most recent run:
+
+```bash 
+stt-log
+```
+To recover the most recent transcript:
+```bash
+stt-last
+```
+To reset a stuck recording:
+```bash
+stt-reset
+```
+
+## Hallucination control
+
+Whisper models can hallucinate repeated phrases when processing long, quiet, or noisy recordings.
+
+The `small.en` mode uses conservative decoding defaults to reduce this risk during hotkey dictation:
+
+```bash
+-mc 0 -tp 0 -tpi 0 -nf -ml 80 -sns
+```
+
+These settings reduce context carryover, disable temperature fallback, limit segment length, and suppress non-speech tokens.
+
+For best results:
+
+- keep hotkey recordings short
+- speak clearly near the microphone
+- avoid long dead-air recordings
+- use stt-reset if a capture gets stuck
+- check stt-log when debugging
+
+## Privacy
+
+This project treats the microphone as a local input device, not a cloud service.
+
+By design:
+
+- transcription runs locally through `whisper.cpp`
+- no cloud STT API is required
+- no account is required
+- recording is user-triggered
+- no always-listening assistant is installed
+- temporary files and logs are stored locally
+- the pipeline is inspectable through shell scripts
+
+A microphone should be an input device, not a surveillance boundary.
 
 ---
+
+## Accessibility
+
+
+This project may be useful as an accessibility aid, especially for reducing typing load.
+
+It may help users who can type, but pay for it through fatigue, pain, repetitive strain, temporary injury, or workflow friction.
+
+It is not medical advice, assistive technology certification, or a guaranteed accommodation tool. Users with access needs should test it carefully against their own workflows and reliability requirements.
+
 
 ## ⚠️  Notes
 

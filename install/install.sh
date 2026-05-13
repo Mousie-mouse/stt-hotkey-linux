@@ -6,6 +6,7 @@ BINDIR="${PREFIX}/bin"
 WHISPER_DIR="${HOME}/whisper.cpp"
 WHISPER_BIN="${WHISPER_DIR}/build/bin/whisper-cli"
 BASE_MODEL="${WHISPER_DIR}/models/ggml-base.en.bin"
+SMALL_MODEL="${WHISPER_DIR}/models/ggml-small.en.bin"
 TEST_DIR="$HOME/stt-audio-tests"
 OUTPUT_DIR="$HOME/stt-output"
 
@@ -18,15 +19,17 @@ mkdir -p "$BINDIR"
 echo "Created test directories at $TEST_DIR"
 echo "Created transcript output directory at $OUTPUT_DIR"
 
-install -m 755 "$(dirname "$0")/../bin/stt" "$BINDIR/stt"
-install -m 755 "$(dirname "$0")/../bin/stt-reset" "$BINDIR/stt-reset"
-install -m 755 "$(dirname "$0")/../bin/stt-log" "$BINDIR/stt-log"
-install -m 755 "$(dirname "$0")/../bin/stt-last" "$BINDIR/stt-last"
-install -m 755 "$(dirname "$0")/../bin/stt-mode-fast-en" "$BINDIR/stt-mode-fast-en"
-install -m 755 "$(dirname "$0")/../bin/stt-mode-better-en" "$BINDIR/stt-mode-better-en"
-install -m 755 "$(dirname "$0")/../bin/stt-mode-multi-auto" "$BINDIR/stt-mode-multi-auto"
-install -m 755 "$(dirname "$0")/../bin/stt-mode-status" "$BINDIR/stt-mode-status"
-install -m 755 "$(dirname "$0")/../bin/stt-compare" "$BINDIR/stt-compare"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+echo "Installing commands from $REPO_DIR/bin to $BINDIR"
+
+for cmd in "$REPO_DIR"/bin/*; do
+  if [ -f "$cmd" ]; then
+    install -m 755 "$cmd" "$BINDIR/$(basename "$cmd")"
+    echo "Installed: $(basename "$cmd")"
+  fi
+done
 
 # Ensure ~/.local/bin is on PATH for future shells
 PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
@@ -75,6 +78,11 @@ if [ ! -f "$BASE_MODEL" ]; then
   bash ./models/download-ggml-model.sh base.en
 fi
 
+if [ ! -f "$SMALL_MODEL" ]; then
+  cd "$WHISPER_DIR"
+  bash ./models/download-ggml-model.sh small.en
+fi
+
 # --- verification block starts here ---
 
 echo
@@ -90,9 +98,14 @@ if [ ! -f "$BASE_MODEL" ]; then
   exit 1
 fi
 
+if [ ! -f "$SMALL_MODEL" ]; then
+  echo "Verification failed: small.en model not found at $SMALL_MODEL"
+  exit 1
+fi
+
 echo "whisper-cli found: $WHISPER_BIN"
 echo "base model found: $BASE_MODEL"
-
+echo "small.en model found: $SMALL_MODEL"
 echo
 echo "Available capture devices:"
 arecord -l || true
@@ -103,6 +116,7 @@ Install complete.
 
 whisper-cli found: $WHISPER_BIN
 base model found: $BASE_MODEL
+small.en model found: $SMALL_MODEL
 transcript output directory: $OUTPUT_DIR
 
 Available capture devices:
@@ -123,5 +137,6 @@ Note:
 
 Optional smoke test:
   $WHISPER_BIN -m $BASE_MODEL -f /path/to/test.wav -l en
+  $WHISPER_BIN -m $SMALL_MODEL -f /path/to/test.wav -l en -mc 0 -tp 0 -tpi 0 -nf -ml 80 -sns
 
 EOF

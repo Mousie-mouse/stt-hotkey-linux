@@ -1,0 +1,267 @@
+#!/usr/bin/env bash
+set -u
+
+# stt-doctor
+# Diagnostic checker for stt-hotkey-linux.
+
+PASS_COUNT=0
+WARN_COUNT=0
+FAIL_COUNT=0
+
+REPO_DIR="${STT_REPO_DIR:-$HOME/stt-hotkey-linux}"
+INSTALL_BIN="$HOME/.local/bin"
+TEST_DIR="$HOME/stt-audio-tests"
+TMP_DIR="/tmp/whisper_stt"
+
+WHISPER_BIN_DEFAULT="$HOME/whisper.cpp/build/bin/whisper-cli"
+BASE_MODEL_DEFAULT="$HOME/whisper.cpp/models/ggml-base.en.bin"
+SMALL_MODEL_DEFAULT="$HOME/whisper.cpp/models/ggml-small.en.bin"
+
+pass() {
+    echo "PASS: $1"
+    PASS_COUNT=$((PASS_COUNT + 1))
+}
+
+warn() {
+    echo "WARN: $1"
+    WARN_COUNT=$((WARN_COUNT + 1))
+}
+
+fail() {
+    echo "FAIL: $1"
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+}
+
+section() {
+    echo
+    echo "== $1 =="
+}
+
+check_command() {
+    local cmd="$1"
+    local note="${2:-}"
+
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "$cmd found: $(command -v "$cmd")"
+    else
+        if [ -n "$note" ]; then
+            fail "$cmd missing. $note"
+        else
+            fail "$cmd missing."
+        fi
+    fi
+}
+
+check_file_executable() {
+    local path="$1"
+    local label="$2"
+
+    if [ -x "$path" ]; then
+        pass "$label executable: $path"
+    elif [ -f "$path" ]; then
+        fail "$label exists but is not executable: $path"
+    else
+        fail "$label not found: $path"
+    fi
+}
+
+check_file_exists() {
+    local path="$1"
+    local label="$2"
+
+    if [ -f "$path" ]; then
+        pass "$label found: $path"
+    else
+        fail "$label missing: $path"
+    fi
+}
+
+check_dir_exists() {
+    local path="$1"
+    local label="$2"
+
+    if [ -d "$path" ]; then
+        pass "$label found: $path"
+    else
+        warn "$label missing: $path"
+    fi
+}
+
+echo "stt-doctor"
+echo "Diagnostic checker for stt-hotkey-linux"
+
+section "System"
+echo "User: $(whoami)"
+echo "Home: $HOME"
+echo "Shell: ${SHELL:-unknown}"
+echo "Date: $(date)"
+echo "Kernel: $(uname -srmo 2>/dev/null || uname -a)"
+
+section "Repository"
+if [ -d "$REPO_DIR/.git" ]; then
+    pass "Git repo found: $REPO_DIR"
+
+    if git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD >/dev/null 2>&1; then
+        echo "Branch: $(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD)"
+    fi
+
+    if git -C "$REPO_DIR" rev-parse --short HEAD >/dev/null 2>&1; then
+        echo "Commit: $(git -C "$REPO_DIR" rev-parse --short HEAD)"
+    fi
+
+    if ! git -C "$REPO_DIR" diff --quiet 2>/dev/null || ! git -C "$REPO_DIR" diff --cached --quiet 2>/dev/null; then
+        warn "Repo has local uncommitted changes."
+        git -C "$REPO_DIR" status --short 2>/dev/null || true
+    else
+        pass "Repo has no uncommitted changes."
+    fi
+else
+    warn "Git repo not found at $REPO_DIR"
+    echo "Set STT_REPO_DIR if the repo lives somewhere else:"
+    echo "  export STT_REPO_DIR=/path/to/stt-hotkey-linux"
+fi
+
+section "Installed commands"
+check_dir_exists "$INSTALL_BIN" "User bin directory"
+
+case ":$PATH:" in
+    *":$INSTALL_BIN:"*)
+        pass "$INSTALL_BIN is in PATH"
+        ;;
+    *)
+        fail "$INSTALL_BIN is not in PATH"
+        echo "Add this to ~/.bashrc or ~/.profile:"
+        echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+        ;;
+esac
+
+for cmd in stt stt-reset stt-last stt-log stt-mode-fast-en stt-mode-better-en stt-mode-status stt-update stt-doctor; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "$cmd installed: $(command -v "$cmd")"
+    else
+        warn "$cmd not found in PATH"
+    fi
+done
+
+section "Repo scripts"
+if [ -d "$REPO_DIR/bin" ]; then
+    for script in "$REPO_DIR"/bin/*; do
+        [ -f "$script" ] || continue
+        if [ -x "$script" ]; then
+            pass "Repo script executable: $(basename "$script")"
+        else
+            warn "Repo script is not executable: $script"
+        fi
+    done
+else
+    warn "Repo bin directory missing: $REPO_DIR/bin"
+fi
+
+section "Core dependencies"
+check_command git "Install with: sudo apt install git"
+check_command ffmpeg "Install with: sudo apt install ffmpeg"
+check_command arecord "Install with: sudo apt install alsa-utils"
+check_command xclip "Install with: sudo apt install xclip"
+check_command notify-send "Install with: sudo apt install libnotify-bin"
+
+section "Optional dependencies"
+if command -v bc >/dev/null 2>&1; then
+    pass "bc found: $(command -v bc)"
+else
+    warn "bc missing. Needed only if scripts use floating-point duration checks. Install with: sudo apt install bc"
+fi
+
+section "Whisper"
+WHISPER_BIN="${WHISPER_BIN:-$WHISPER_BIN_DEFAULT}"
+BASE_MODEL="${BASE_MODEL:-$BASE_MODEL_DEFAULT}"
+SMALL_MODEL="${SMALL_MODEL:-$SMALL_MODEL_DEFAULT}"
+
+check_file_executable "$WHISPER_BIN" "whisper-cli"
+check_file_exists "$BASE_MODEL" "base.en model"
+check_file_exists "$SMALL_MODEL" "small.en model"
+
+if [ -x "$WHISPER_BIN" ]; then
+    echo
+    echo "whisper-cli help check:"
+    if "$WHISPER_BIN" --help >/tmp/stt-doctor-whisper-help.txt 2>&1; then
+        pass "whisper-cli runs"
+
+        for flag in "-mc" "-tp" "-tpi" "-nf" "-ml" "-sns"; do
+            if grep -q -- "$flag" /tmp/stt-doctor-whisper-help.txt; then
+                pass "whisper-cli supports $flag"
+            else
+                warn "whisper-cli help did not show $flag"
+            fi
+        done
+    else
+        fail "whisper-cli did not run successfully"
+    fi
+fi
+
+section "Audio capture"
+if command -v arecord >/dev/null 2>&1; then
+    echo "Available capture devices:"
+    arecord -l 2>/tmp/stt-doctor-arecord.err || true
+
+    if arecord -l 2>/dev/null | grep -q "card"; then
+        pass "arecord sees at least one capture device"
+    else
+        warn "arecord did not list a capture device"
+        echo "Try:"
+        echo "  arecord -l"
+        echo "  arecord -L | sed -n '1,120p'"
+    fi
+else
+    fail "Cannot check audio devices because arecord is missing"
+fi
+
+section "Working directories"
+check_dir_exists "$TEST_DIR" "Test directory"
+check_dir_exists "$TEST_DIR/transcripts" "Transcript directory"
+check_dir_exists "$TMP_DIR" "Temporary STT directory"
+
+if [ -d "$TMP_DIR" ]; then
+    echo "Temporary files:"
+    find "$TMP_DIR" -maxdepth 1 -type f -printf "  %f\n" 2>/dev/null | sort || true
+fi
+
+section "Mode status"
+if command -v stt-mode-status >/dev/null 2>&1; then
+    stt-mode-status || warn "stt-mode-status returned an error"
+else
+    warn "stt-mode-status not available"
+fi
+
+section "Recent logs"
+if command -v stt-log >/dev/null 2>&1; then
+    echo "stt-log is installed. Run this for last debug log:"
+    echo "  stt-log"
+else
+    warn "stt-log not installed"
+fi
+
+if command -v stt-last >/dev/null 2>&1; then
+    echo "stt-last is installed. Run this for last transcript:"
+    echo "  stt-last"
+else
+    warn "stt-last not installed"
+fi
+
+section "Summary"
+echo "PASS: $PASS_COUNT"
+echo "WARN: $WARN_COUNT"
+echo "FAIL: $FAIL_COUNT"
+
+if [ "$FAIL_COUNT" -gt 0 ]; then
+    echo
+    echo "Result: problems found."
+    exit 1
+elif [ "$WARN_COUNT" -gt 0 ]; then
+    echo
+    echo "Result: usable, but warnings found."
+    exit 0
+else
+    echo
+    echo "Result: looks good."
+    exit 0
+fi
