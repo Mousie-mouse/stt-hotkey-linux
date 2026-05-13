@@ -31,7 +31,7 @@ It is not designed as a perfect meeting transcription system. It is designed for
 
 `stt-hotkey-linux` is tuned for short-form dictation. Recordings around 1–90 seconds are the safest target.
 
-Longer recordings may work, but quiet sections, dead air, breathing, fan noise, or distant speech can increase the chance of repeated phrase hallucinations. Use shorter captures for best results.
+Longer recordings may work, but quiet sections, dead air, breathing, fan noise, or distant speech can increase the chance of repeated phrase hallucinations. Use shorter captures for best results. At 5 mins you will get a one minute warning. At six mins the recording will automatically complete the recording with the same behavior as the user toggle. This prevents indefinitely large files that would cause crashes and general mayhem. This is not a tool for extended recording. 
 
 ## Demo
 

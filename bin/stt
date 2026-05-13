@@ -10,6 +10,9 @@ LOCK_DIR="$TMP_DIR/lock"
 OUTPUT_DIR="${STT_OUTPUT_DIR:-$HOME/stt-output}"
 OUTPUT_LATEST="$OUTPUT_DIR/latest.txt"
 
+WARN_AFTER_SECONDS="${WARN_AFTER_SECONDS:-300}"   # 5 minutes
+MAX_RECORD_SECONDS="${MAX_RECORD_SECONDS:-360}"   # 6 minutes
+
 MODEL_FILE="$TMP_DIR/current_model"
 LANG_FILE="$TMP_DIR/current_language"
 EXTRA_FILE="$TMP_DIR/current_extra"
@@ -72,6 +75,36 @@ if ! command -v xclip >/dev/null 2>&1; then
     notify "xclip not installed"
     exit 1
 fi
+
+start_recording_watchdog() {
+  local watched_pid="$1"
+  local stt_cmd="$0"
+ 
+ (
+    sleep "$WARN_AFTER_SECONDS"
+
+    # Only warn if this exact recording is still active.
+    if [ -f "$PID_FILE" ] \
+      && [ "$(cat "$PID_FILE" 2>/dev/null || true)" = "$watched_pid" ] \
+      && ps -p "$watched_pid" >/dev/null 2>&1; then
+
+      notify "Recording has reached 5 minutes. It will stop and transcribe in 1 minute."
+    else
+      exit 0
+    fi
+
+    sleep $((MAX_RECORD_SECONDS - WARN_AFTER_SECONDS))
+
+    # Only auto-stop if this exact recording is still active.
+    if [ -f "$PID_FILE" ] \
+      && [ "$(cat "$PID_FILE" 2>/dev/null || true)" = "$watched_pid" ] \
+      && ps -p "$watched_pid" >/dev/null 2>&1; then
+
+      notify "6-minute limit reached. Stopping and transcribing now."
+      "$stt_cmd"
+    fi
+  ) >/dev/null 2>&1 &
+}
 
 # Clear stale PID if recorder is gone
 if [ -f "$PID_FILE" ]; then
@@ -139,12 +172,17 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # Start recording
+
 rm -f "$WAV_FILE" "$LOG_FILE"
 
 notify "Recording started"
-arecord -q -f S16_LE -c 1 -r 16000 "$WAV_FILE" >"$LOG_FILE" 2>&1 &
-REC_PID=$!
+arecord -f S16_LE -r 16000 -c 1 "$WAV_FILE" &
+REC_PID="$!"
 echo "$REC_PID" > "$PID_FILE"
+
+start_recording_watchdog "$REC_PID"
+
+notify "Recording started. Auto-stop limit: 6 minutes."
 
 sleep 0.2
 if ! kill -0 "$REC_PID" 2>/dev/null; then
