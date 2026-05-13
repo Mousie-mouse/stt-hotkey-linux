@@ -322,9 +322,15 @@ For best results:
 - use stt-reset if a capture gets stuck
 - check stt-log when debugging
 
-## Privacy
+## Notes
 
-This project treats the microphone as a local input device, not a cloud service.
+- Requires working microphone input (ALSA)
+- Uses whisper.cpp models locally
+- First install will take a few minutes (build + model download)
+
+
+### Privacy
+This project treats the microphone as a local input device, not a cloud service. You should not have to sacrifice privacy to use your own microphone.
 
 By design:
 
@@ -333,14 +339,14 @@ By design:
 - no account is required
 - recording is user-triggered
 - no always-listening assistant is installed
-- temporary files and logs are stored locally
 - the pipeline is inspectable through shell scripts
+- Runs fully locally (no external API calls)
+- Audio never leaves the machine
+- Recordings stay temporary in `/tmp/whisper_stt`
+- Transcripts are saved locally in `~/stt-output`
+- Minimal dependencies (Built using Linux Mint Cinnamon, should work on Ubuntu generally, but troubleshooting will differ across OS)
 
-A microphone should be an input device, not a surveillance boundary.
-
----
-
-## Accessibility
+### Accessibility
 
 
 This project may be useful as an accessibility aid, especially for reducing typing load.
@@ -350,19 +356,13 @@ It may help users who can type, but pay for it through fatigue, pain, repetitive
 It is not medical advice, assistive technology certification, or a guaranteed accommodation tool. Users with access needs should test it carefully against their own workflows and reliability requirements.
 
 
-## ⚠️  Notes
+### Development transparency
 
-- Requires working microphone input (ALSA)
-- Uses whisper.cpp models locally
-- First install will take a few minutes (build + model download)
+This project uses AI-assisted development as part of the workflow.
 
-Security / Privacy
+ChatGPT was used as a pair-programming and debugging tool to help generate shell-script drafts, troubleshoot Linux audio behavior, improve installer/update logic, and write documentation. The project direction, testing, repository maintenance, and final implementation decisions were handled by the maintainer.
 
-- Runs fully locally (no external API calls)
-- Audio never leaves the machine
-- Recordings stay temporary in `/tmp/whisper_stt`
-- Transcripts are saved locally in `~/stt-output`
-- Minimal dependencies
+AI assistance was used in the development process, but the tool is maintained, tested, and validated by the project owner.
 
 ---
 
