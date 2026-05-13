@@ -1,14 +1,69 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -u
 
 TMP_DIR="/tmp/whisper_stt"
+MODEL_FILE="$TMP_DIR/current_model"
+LANG_FILE="$TMP_DIR/current_language"
+EXTRA_FILE="$TMP_DIR/current_extra"
 
-notify() {
-    if command -v notify-send >/dev/null 2>&1; then
-        notify-send "STT" "$1" >/dev/null 2>&1 || true
-    fi
-}
+DEFAULT_MODEL="$HOME/whisper.cpp/models/ggml-base.en.bin"
+DEFAULT_LANG="en"
+DEFAULT_EXTRA=""
 
-LANG=$(cat "$TMP_DIR/current_language" 2>/dev/null || echo "unset")
-MODEL=$(cat "$TMP_DIR/current_model" 2>/dev/null || echo "unset")
+MODEL="$DEFAULT_MODEL"
+LANG="$DEFAULT_LANG"
+EXTRA="$DEFAULT_EXTRA"
 
-notify "Lang: $LANG | Model: $(basename "$MODEL")"
+if [ -s "$MODEL_FILE" ]; then
+  MODEL="$(cat "$MODEL_FILE")"
+fi
+
+if [ -s "$LANG_FILE" ]; then
+  LANG="$(cat "$LANG_FILE")"
+fi
+
+if [ -s "$EXTRA_FILE" ]; then
+  EXTRA="$(cat "$EXTRA_FILE")"
+fi
+
+echo "STT mode status"
+echo
+
+echo "Model:"
+echo "  $MODEL"
+
+echo
+echo "Language:"
+echo "  $LANG"
+
+echo
+echo "Extra Whisper args:"
+if [ -n "$EXTRA" ]; then
+  echo "  $EXTRA"
+else
+  echo "  none"
+fi
+
+echo
+echo "Mode guess:"
+
+case "$MODEL $LANG $EXTRA" in
+  *"ggml-base.en.bin en"*)
+    echo "  fast-en"
+    ;;
+  *"ggml-small.en.bin en"*)
+    echo "  better-en"
+    ;;
+  *"ggml-small.bin auto"*|*"ggml-base.bin auto"*)
+    echo "  multi-auto"
+    ;;
+  *)
+    echo "  custom/unknown"
+    ;;
+esac
+
+echo
+echo "Files:"
+echo "  model file:    $MODEL_FILE"
+echo "  language file: $LANG_FILE"
+echo "  extra file:    $EXTRA_FILE"
